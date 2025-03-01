@@ -1,0 +1,38 @@
+name: RSS Feed Check
+
+on:
+  schedule:
+    # Run every 4 hours
+    - cron: '0 */4 * * *'
+  
+  # Allow manual triggering from the GitHub web portal
+  workflow_dispatch:
+
+jobs:
+  check-feeds:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Build application
+        run: go build -o rss-feed-manager ./cmd/main.go
+      
+      - name: Run RSS feed manager
+        run: ./rss-feed-manager
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      
+      - name: Commit state changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add state.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update feed state [skip ci]"
+          git push 
