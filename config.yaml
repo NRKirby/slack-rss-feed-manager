@@ -1,0 +1,10 @@
+# Slack RSS Feed Configuration
+# Format:
+# slack_channel: The Slack channel where updates will be posted (including #)
+# feeds: List of RSS feed URLs to monitor for that channel
+
+channels:
+  - slack_channel: tech-blog-alerts
+    feeds:
+      - https://go.dev/blog/feed.atom
+      - https://tailscale.com/blog/index.xml

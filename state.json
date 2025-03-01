@@ -1,0 +1,14 @@
+{
+  "Channels": {
+    "tech-blog-alerts": {
+      "Feeds": {
+        "https://go.dev/blog/feed.atom": {
+          "LastUpdated": "2025-02-26T00:00:00Z"
+        },
+        "https://tailscale.com/blog/index.xml": {
+          "LastUpdated": "2025-02-13T17:00:56Z"
+        }
+      }
+    }
+  }
+}
