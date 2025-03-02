@@ -36,6 +36,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       
       - name: Configure Git
+        if: success()
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
