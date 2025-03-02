@@ -27,11 +27,10 @@ jobs:
         with:
           go-version: '1.21'
       
-      - name: Build application
-        run: go build -o rss-feed-manager ./cmd/main.go
-      
       - name: Run RSS feed manager
-        run: ./rss-feed-manager
+        run: |
+          set -e  # Exit immediately if a command exits with a non-zero status
+          go run cmd/main.go
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       
