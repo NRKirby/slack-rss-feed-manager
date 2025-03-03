@@ -11,6 +11,10 @@ import (
 	st "slack-rss-feed-manager/state"
 )
 
+type SlackClient interface {
+	PostMessage(channel, text string) error
+}
+
 func main() {
 	startTime := time.Now()
 	log.Printf("RSS Feed Manager starting at %s", startTime.Format(time.RFC3339))
@@ -72,7 +76,7 @@ func updateSubscriptions(cfg config.Config, state *st.State) {
 				channelState.Feeds[feed] = st.FeedState{LastUpdated: time.Now()}
 			}
 		}
-		// Remove feeds not in config (optional, for full state management)
+		// Remove feeds not in config
 		for feed := range channelState.Feeds {
 			found := false
 			for _, f := range ch.Feeds {
@@ -90,7 +94,7 @@ func updateSubscriptions(cfg config.Config, state *st.State) {
 	}
 }
 
-func processFeeds(cfg config.Config, state *st.State, slackClient *slack.Client) (int, int) {
+func processFeeds(cfg config.Config, state *st.State, slackClient SlackClient) (int, int) {
 	totalFeeds := 0
 	totalNewPosts := 0
 
