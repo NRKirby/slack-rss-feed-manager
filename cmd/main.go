@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"sort"
 	"time"
 
 	"slack-rss-feed-manager/config"
@@ -13,6 +14,16 @@ import (
 
 type SlackClient interface {
 	PostMessage(channel, text string) error
+}
+
+type RSSClient interface {
+	FetchFeed(url string, lastUpdated time.Time) ([]rss.FeedItem, time.Time, error)
+}
+
+type defaultRSSClient struct{}
+
+func (c *defaultRSSClient) FetchFeed(url string, lastUpdated time.Time) ([]rss.FeedItem, time.Time, error) {
+	return rss.FetchFeed(url, lastUpdated)
 }
 
 func main() {
@@ -49,7 +60,8 @@ func main() {
 	log.Printf("Updating subscriptions...")
 	updateSubscriptions(cfg, &currentState)
 	log.Printf("Processing feeds...")
-	feedsProcessed, postsFound := processFeeds(cfg, &currentState, slackClient)
+	rssClient := &defaultRSSClient{}
+	feedsProcessed, postsFound := processFeeds(cfg, &currentState, slackClient, rssClient)
 
 	// Save updated state
 	log.Printf("Saving updated state to %s", stateFile)
@@ -94,7 +106,7 @@ func updateSubscriptions(cfg config.Config, state *st.State) {
 	}
 }
 
-func processFeeds(cfg config.Config, state *st.State, slackClient SlackClient) (int, int) {
+func processFeeds(cfg config.Config, state *st.State, slackClient SlackClient, rssClient RSSClient) (int, int) {
 	totalFeeds := 0
 	totalNewPosts := 0
 
@@ -109,7 +121,7 @@ func processFeeds(cfg config.Config, state *st.State, slackClient SlackClient) (
 			lastUpdated := chState.Feeds[feedURL].LastUpdated
 			log.Printf("Last updated: %s", lastUpdated.Format(time.RFC3339))
 
-			items, newLastUpdated, err := rss.FetchFeed(feedURL, lastUpdated)
+			items, newLastUpdated, err := rssClient.FetchFeed(feedURL, lastUpdated)
 			if err != nil {
 				log.Printf("Error fetching feed %s: %v", feedURL, err)
 				continue
@@ -117,6 +129,10 @@ func processFeeds(cfg config.Config, state *st.State, slackClient SlackClient) (
 
 			log.Printf("Found %d new items in feed %s", len(items), feedURL)
 			totalNewPosts += len(items)
+
+			sort.Slice(items, func(i, j int) bool {
+				return items[i].Published.Before(items[j].Published)
+			})
 
 			for _, item := range items {
 				log.Printf("Posting new item to #%s: %s", channel, item.Title)

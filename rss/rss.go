@@ -8,8 +8,9 @@ import (
 )
 
 type FeedItem struct {
-	Title string
-	Link  string
+	Title     string
+	Link      string
+	Published time.Time
 }
 
 func FetchFeed(url string, lastUpdated time.Time) ([]FeedItem, time.Time, error) {
@@ -26,7 +27,11 @@ func FetchFeed(url string, lastUpdated time.Time) ([]FeedItem, time.Time, error)
 			pubTime = item.UpdatedParsed
 		}
 		if pubTime != nil && pubTime.After(lastUpdated) {
-			items = append(items, FeedItem{Title: item.Title, Link: item.Link})
+			items = append(items, FeedItem{
+				Title:     item.Title,
+				Link:      item.Link,
+				Published: *pubTime,
+			})
 			if pubTime.After(latest) {
 				latest = *pubTime
 			}
