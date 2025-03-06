@@ -40,7 +40,7 @@ jobs:
           git add state.json
           # Only commit and push if there are changes
           if ! git diff --staged --quiet; then
-            git commit -m 'Update feed state'
+            git commit -m 'chore: update feed state'
             git push
           else
             echo "No changes to commit"
