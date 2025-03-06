@@ -11,6 +11,7 @@ type FeedItem struct {
 	Title     string
 	Link      string
 	Published time.Time
+	FeedTitle string
 }
 
 func FetchFeed(url string, lastUpdated time.Time) ([]FeedItem, time.Time, error) {
@@ -31,6 +32,7 @@ func FetchFeed(url string, lastUpdated time.Time) ([]FeedItem, time.Time, error)
 				Title:     item.Title,
 				Link:      item.Link,
 				Published: *pubTime,
+				FeedTitle: feed.Title,
 			})
 			if pubTime.After(latest) {
 				latest = *pubTime
@@ -41,5 +43,5 @@ func FetchFeed(url string, lastUpdated time.Time) ([]FeedItem, time.Time, error)
 }
 
 func FormatItem(item FeedItem) string {
-	return fmt.Sprintf("New post: %s (%s)", item.Title, item.Link)
+	return fmt.Sprintf("New post from %s: %s\n%s", item.FeedTitle, item.Title, item.Link)
 }

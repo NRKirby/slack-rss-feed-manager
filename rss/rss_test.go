@@ -97,18 +97,20 @@ func TestFormatItem(t *testing.T) {
 		{
 			name: "basic item",
 			item: FeedItem{
-				Title: "Test Post",
-				Link:  "http://example.com/post",
+				Title:     "Test Post",
+				Link:      "http://example.com/post",
+				FeedTitle: "Example Blog",
 			},
-			expected: "New post: Test Post (http://example.com/post)",
+			expected: "New post from Example Blog: Test Post\nhttp://example.com/post",
 		},
 		{
 			name: "item with special characters",
 			item: FeedItem{
-				Title: "Test & Post",
-				Link:  "http://example.com/post?q=1&t=2",
+				Title:     "Test & Post",
+				Link:      "http://example.com/post?q=1&t=2",
+				FeedTitle: "Tech & News",
 			},
-			expected: "New post: Test & Post (http://example.com/post?q=1&t=2)",
+			expected: "New post from Tech & News: Test & Post\nhttp://example.com/post?q=1&t=2",
 		},
 	}
 
