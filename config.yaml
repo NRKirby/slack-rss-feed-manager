@@ -8,3 +8,4 @@ channels:
     feeds:
       - https://go.dev/blog/feed.atom
       - https://tailscale.com/blog/index.xml
+      - https://michael.stapelberg.ch/feed.xml
