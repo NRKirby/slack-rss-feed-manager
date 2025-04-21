@@ -2,6 +2,9 @@
   "Channels": {
     "tech-blog-alerts": {
       "Feeds": {
+        "https://deepmind.google/blog/rss.xml": {
+          "LastUpdated": "2025-04-21T15:09:27.960544946Z"
+        },
         "https://go.dev/blog/feed.atom": {
           "LastUpdated": "2025-04-02T00:00:00Z"
         },
