@@ -9,3 +9,4 @@ channels:
       - https://go.dev/blog/feed.atom
       - https://tailscale.com/blog/index.xml
       - https://michael.stapelberg.ch/feed.xml
+      - https://deepmind.google/blog/rss.xml
