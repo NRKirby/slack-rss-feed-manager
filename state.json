@@ -2,6 +2,9 @@
   "Channels": {
     "tech-blog-alerts": {
       "Feeds": {
+        "https://antirez.com/rss": {
+          "LastUpdated": "2025-07-20T10:58:54Z"
+        },
         "https://deepmind.google/blog/rss.xml": {
           "LastUpdated": "2025-07-23T14:59:26Z"
         },
