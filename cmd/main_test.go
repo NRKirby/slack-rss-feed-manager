@@ -33,16 +33,28 @@ func (m *mockSlackClient) PostMessage(channel, text string) error {
 
 type mockRSSClient struct {
 	items []rss.FeedItem
+	err   error
 }
 
 func (m *mockRSSClient) FetchFeed(url string, lastUpdated time.Time) ([]rss.FeedItem, time.Time, error) {
+	if m.err != nil {
+		return nil, time.Time{}, m.err
+	}
+	
 	var latest time.Time
+	var filteredItems []rss.FeedItem
+	
 	for _, item := range m.items {
 		if item.Published.After(latest) {
 			latest = item.Published
 		}
+		// Only return items newer than lastUpdated (like the real implementation)
+		if item.Published.After(lastUpdated) {
+			filteredItems = append(filteredItems, item)
+		}
 	}
-	return m.items, latest, nil
+	
+	return filteredItems, latest, nil
 }
 
 func TestUpdateSubscriptions(t *testing.T) {
@@ -74,7 +86,8 @@ func TestUpdateSubscriptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			currentState := tt.initialState
-			updateSubscriptions(tt.config, &currentState)
+			mockRSS := &mockRSSClient{}
+			updateSubscriptions(tt.config, &currentState, mockRSS)
 
 			// Verify channel exists
 			channelState, exists := currentState.Channels[tt.expectedChannel]
@@ -95,6 +108,50 @@ func TestUpdateSubscriptions(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNewFeedDeliversMostRecentPost(t *testing.T) {
+	mostRecentTime := time.Date(2025, 7, 25, 15, 0, 0, 0, time.UTC)
+	olderTime := mostRecentTime.Add(-3 * time.Hour)
+	
+	mockRSS := &mockRSSClient{
+		items: []rss.FeedItem{
+			{
+				Title:     "Older Post",
+				Link:      "http://example.com/older",
+				Published: olderTime,
+				FeedTitle: "Example Blog",
+			},
+			{
+				Title:     "Most Recent Post",
+				Link:      "http://example.com/recent",
+				Published: mostRecentTime,
+				FeedTitle: "Example Blog",
+			},
+		},
+	}
+	
+	cfg := config.Config{
+		Channels: []config.Channel{
+			{
+				SlackChannel: "test-channel",
+				Feeds:        []string{"http://example.com/feed"},
+			},
+		},
+	}
+	
+	currentState := state.State{
+		Channels: make(map[string]state.ChannelState),
+	}
+	
+	updateSubscriptions(cfg, &currentState, mockRSS)
+	
+	feedState := currentState.Channels["test-channel"].Feeds["http://example.com/feed"]
+	expectedLastUpdated := mostRecentTime.Add(-1 * time.Hour)
+	
+	if !feedState.LastUpdated.Equal(expectedLastUpdated) {
+		t.Errorf("Expected LastUpdated to be %v, got %v", expectedLastUpdated, feedState.LastUpdated)
 	}
 }
 

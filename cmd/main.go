@@ -58,9 +58,9 @@ func main() {
 
 	// Update subscriptions and process feeds
 	log.Printf("Updating subscriptions...")
-	updateSubscriptions(cfg, &currentState)
-	log.Printf("Processing feeds...")
 	rssClient := &defaultRSSClient{}
+	updateSubscriptions(cfg, &currentState, rssClient)
+	log.Printf("Processing feeds...")
 	feedsProcessed, postsFound := processFeeds(cfg, &currentState, slackClient, rssClient)
 
 	// Save updated state
@@ -74,7 +74,7 @@ func main() {
 	log.Printf("Summary: Processed %d feeds, found %d new posts", feedsProcessed, postsFound)
 }
 
-func updateSubscriptions(cfg config.Config, state *st.State) {
+func updateSubscriptions(cfg config.Config, state *st.State, rssClient RSSClient) {
 	for _, ch := range cfg.Channels {
 		if _, ok := state.Channels[ch.SlackChannel]; !ok {
 			log.Printf("Adding new channel to state: %s", ch.SlackChannel)
@@ -85,7 +85,30 @@ func updateSubscriptions(cfg config.Config, state *st.State) {
 		for _, feed := range ch.Feeds {
 			if _, ok := channelState.Feeds[feed]; !ok {
 				log.Printf("Adding new feed to channel %s: %s", ch.SlackChannel, feed)
-				channelState.Feeds[feed] = st.FeedState{LastUpdated: time.Now()}
+				
+				// For new feeds, fetch the latest post and set LastUpdated to 1 hour before it
+				// This ensures the most recent post will be picked up in the next processing cycle
+				items, _, err := rssClient.FetchFeed(feed, time.Time{}) // Use zero time to get all items
+				if err != nil {
+					log.Printf("Warning: Failed to fetch new feed %s for initial setup: %v", feed, err)
+					// Fallback to 24 hours ago if we can't fetch the feed
+					channelState.Feeds[feed] = st.FeedState{LastUpdated: time.Now().Add(-24 * time.Hour)}
+				} else if len(items) > 0 {
+					// Set LastUpdated to 1 hour before the most recent post
+					mostRecent := items[0].Published
+					for _, item := range items {
+						if item.Published.After(mostRecent) {
+							mostRecent = item.Published
+						}
+					}
+					channelState.Feeds[feed] = st.FeedState{LastUpdated: mostRecent.Add(-1 * time.Hour)}
+					log.Printf("New feed %s: most recent post at %s, set LastUpdated to %s", 
+						feed, mostRecent.Format(time.RFC3339), mostRecent.Add(-1*time.Hour).Format(time.RFC3339))
+				} else {
+					// No items in feed, set to current time
+					channelState.Feeds[feed] = st.FeedState{LastUpdated: time.Now()}
+					log.Printf("New feed %s has no items, set LastUpdated to now", feed)
+				}
 			}
 		}
 		// Remove feeds not in config
