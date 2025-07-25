@@ -6,7 +6,8 @@
 channels:
   - slack_channel: tech-blog-alerts
     feeds:
-      - https://go.dev/blog/feed.atom
-      - https://tailscale.com/blog/index.xml
-      - https://michael.stapelberg.ch/feed.xml
+      - https://antirez.com/rss
       - https://deepmind.google/blog/rss.xml
+      - https://go.dev/blog/feed.atom
+      - https://michael.stapelberg.ch/feed.xml
+      - https://tailscale.com/blog/index.xml
